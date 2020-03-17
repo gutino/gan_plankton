@@ -1,6 +1,13 @@
+import torch
+import random
+
+import torch.device as torch_device
+import torch.optim as optim
 import torch.nn as nn
 import torch.nn.parallel
 
+random.seed(100)
+torch.manual_seed(100)
 
 # custom weights initialization called on netG and netD
 def weights_init(m):
@@ -76,3 +83,38 @@ class Discriminator(nn.Module):
 
     def forward(self, input):
         return self.main(input)
+
+
+class dcgan:
+    def __init__(self, discriminator, generator, learning_rate, beta1, ngpu):
+        # Define device to run model
+        self.device = torch_device(
+            "cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu"
+        )
+
+        # Create the Generator
+        self.generator = generator.to(self.device)
+        # Create the Discriminator
+        self.discriminator = discriminator.to(self.device)
+
+        # Handle multi-gpu if desired
+        if (self.device.type == "cuda") and (ngpu > 1):
+            self.generator = nn.DataParallel(self.generator, list(range(ngpu)))
+            netD = nn.DataParallel(netD, list(range(ngpu)))
+
+        # init weights
+        self.generator.apply(weights_init)
+        self.discriminator.apply(weights_init)
+
+        # Set optimizers
+        self.criterion = nn.BCELoss()
+
+        self.optimizerG = optim.Adam(
+            self.generator.parameters(), lr=learning_rate, betas=(beta1, 0.999)
+        )
+        self.optimizerD = optim.Adam(
+            self.discriminator.parameters(), lr=learning_rate, betas=(beta1, 0.999)
+        )
+
+    def train(self, dataloader, num_epochs):
+        pass
