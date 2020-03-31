@@ -231,8 +231,7 @@ class DCGAN:
 
     def generate(self, latent_tensors):
         with torch.no_grad():
-            fake = self.generator(latent_tensors).detach().cpu()
-            return vutils.make_grid(fake, padding=2, normalize=True)
+            return self.generator(latent_tensors).detach().cpu()
 
     def predict_discriminator(self, images):
         dev_images = images.to(self.device)
