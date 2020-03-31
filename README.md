@@ -49,7 +49,7 @@ Project Organization
     │   │   └── train_model.py
     │   │
     │   └── visualization  <- Scripts to create exploratory and results oriented visualizations
-            └── visualize.py
+    │       └── visualize.py
 
 
 --------
