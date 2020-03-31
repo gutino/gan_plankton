@@ -1,10 +1,24 @@
 # -*- coding: utf-8 -*-
 from torch.utils.data import DataLoader
 from torchvision.datasets import ImageFolder
+import torchvision.transforms as transforms
 
 
-def make_dataloader(dataroot, transforms, batch_size, workers=6):
-    dataset = ImageFolder(root=dataroot, transform=transforms)
+def default_transformations(image_size):
+    return transforms.Compose(
+        [
+            transforms.Resize(image_size),
+            transforms.CenterCrop(image_size),
+            transforms.ToTensor(),
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+        ]
+    )
+
+
+def make_dataloader(dataroot, image_size=64, batch_size=128, workers=2):
+    transformations = default_transformations(image_size)
+
+    dataset = ImageFolder(root=dataroot, transform=transformations)
 
     dataloader = DataLoader(
         dataset, batch_size=batch_size, shuffle=True, num_workers=workers
