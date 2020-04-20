@@ -11,7 +11,7 @@ from IPython.display import HTML
 def print_samples(dataloader, gpu=True):
     device = torch.device("cuda:0" if (torch.cuda.is_available() and gpu) else "cpu")
     print_batch_images(next(iter(dataloader)), device)
-    
+
 
 def print_batch_images(imgs_batch, device, num_imgs=64):
     plt.figure(figsize=(8, 8))
@@ -27,7 +27,7 @@ def print_batch_images(imgs_batch, device, num_imgs=64):
     )
 
 
-def plot_loss(G_losses, D_losses, img_path=None):
+def plot_loss(G_losses, D_losses, img_path=None, notebook=True):
     plt.figure(figsize=(10, 5))
     plt.title("Generator and Discriminator Loss During Training")
     plt.plot(G_losses, label="G")
@@ -38,12 +38,13 @@ def plot_loss(G_losses, D_losses, img_path=None):
 
     if img_path:
         plt.savefig(img_path)
-        plt.close()
-    else:
+    if notebook:
         plt.show()
+    else:
+        plt.close()
 
 
-def generator_progress(fake_images, gif_path=None):
+def generator_progress(fake_images, gif_path=None, notebook=True):
     fig = plt.figure(figsize=(8, 8))
     plt.axis("off")
     ims = [[plt.imshow(np.transpose(i, (1, 2, 0)), animated=True)] for i in fake_images]
@@ -53,12 +54,13 @@ def generator_progress(fake_images, gif_path=None):
 
     if gif_path:
         ani.save(gif_path, writer="imagemagick", fps=60)
-        plt.close(fig)
-    else:
+    if notebook:
         HTML(ani.to_jshtml())
+    else:
+        plt.close(fig)
 
 
-def compare_fake_real(dataloader, device, fake_images, img_path=None):
+def compare_fake_real(dataloader, device, fake_images, img_path=None, notebook=True):
     # Grab a batch of real images from the dataloader
     real_batch = next(iter(dataloader))
 
@@ -84,6 +86,7 @@ def compare_fake_real(dataloader, device, fake_images, img_path=None):
 
     if img_path:
         plt.savefig(img_path)
-        plt.close()
-    else:
+    if notebook:
         plt.show()
+    else:
+        plt.close()

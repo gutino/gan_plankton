@@ -16,11 +16,13 @@ random.seed(100)
 torch.manual_seed(100)
 
 
-class Generator(nn.Module):
+class DCGAN_Generator(nn.Module):
     def __init__(self, latent_size, feature_map_size, channel_size, ngpu=1):
-        super(Generator, self).__init__()
+        super(DCGAN_Generator, self).__init__()
         self.latent_size = latent_size
         self.ngpu = ngpu
+
+        # Parametrizar tamanho dos filtros ou deixar claro que os parâmetros vieram do paper
 
         self.main = nn.Sequential(
             # input is Z, going into a convolution
@@ -57,9 +59,9 @@ class Generator(nn.Module):
         return self.main(input)
 
 
-class Discriminator(nn.Module):
+class DCGAN_Discriminator(nn.Module):
     def __init__(self, feature_map_size, channel_size, ngpu=1):
-        super(Discriminator, self).__init__()
+        super(DCGAN_Discriminator, self).__init__()
         self.ngpu = ngpu
         self.main = nn.Sequential(
             # input is (nc) x 64 x 64
@@ -86,7 +88,7 @@ class Discriminator(nn.Module):
         return self.main(input)
 
 
-class DCGAN:
+class GAN:
     def __init__(self, discriminator, generator, learning_rate, beta1, ngpu=1):
         # Define device to run model
         self.device = torch.device(
@@ -217,6 +219,7 @@ class DCGAN:
                 self.G_losses.append(errG.item())
                 self.D_losses.append(errD.item())
 
+                # checar diferença entre pixel das imagens
                 # Check how the generator is doing by saving G's output on fixed_noise
                 if (iters % 500 == 0) or (
                     (epoch == num_epochs - 1) and (i == len(dataloader) - 1)
