@@ -92,3 +92,6 @@ target/
 # Plots
 *.gif
 *.png
+
+# persisted model
+*.pkl

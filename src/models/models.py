@@ -1,5 +1,7 @@
 import numpy as np
 import torch
+import dill
+import os
 import random
 
 import torch.optim as optim
@@ -17,10 +19,9 @@ torch.manual_seed(100)
 
 
 class DCGAN_Generator(nn.Module):
-    def __init__(self, latent_size, feature_map_size, channel_size, ngpu=1):
+    def __init__(self, latent_size, feature_map_size, channel_size):
         super(DCGAN_Generator, self).__init__()
         self.latent_size = latent_size
-        self.ngpu = ngpu
 
         # Parametrizar tamanho dos filtros ou deixar claro que os parâmetros vieram do paper
 
@@ -60,9 +61,8 @@ class DCGAN_Generator(nn.Module):
 
 
 class DCGAN_Discriminator(nn.Module):
-    def __init__(self, feature_map_size, channel_size, ngpu=1):
+    def __init__(self, feature_map_size, channel_size):
         super(DCGAN_Discriminator, self).__init__()
-        self.ngpu = ngpu
         self.main = nn.Sequential(
             # input is (nc) x 64 x 64
             nn.Conv2d(channel_size, feature_map_size, 4, 2, 1, bias=False),
@@ -94,6 +94,9 @@ class GAN:
         self.device = torch.device(
             "cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu"
         )
+
+        self.img_list = []
+        self.loss = {"discriminator": [], "generator": []}
 
         # Create the Generator
         self.generator = generator.to(self.device)
@@ -127,15 +130,12 @@ class GAN:
             nn.init.normal_(m.weight.data, 1.0, 0.02)
             nn.init.constant_(m.bias.data, 0)
 
-    def train(self, dataloader, num_epochs):
+    def train(self, dataloader, num_epochs, verbose=2):
         fixed_noise = torch.randn(
             64, self.generator.latent_size, 1, 1, device=self.device
         )
 
         # Lists to keep track of progress
-        self.img_list = []
-        self.G_losses = []
-        self.D_losses = []
         iters = 0
 
         print("Starting Training Loop...")
@@ -199,7 +199,7 @@ class GAN:
                 self.optimizerG.step()
 
                 # Output training stats
-                if i % 50 == 0:
+                if i % 50 == 0 and verbose > 1:
                     print(
                         "[%d/%d][%d/%d]\tLoss_D: %.4f\tLoss_G: %.4f\tD(x): %.4f\tD(G(z)): %.4f / %.4f"
                         % (
@@ -216,8 +216,8 @@ class GAN:
                     )
 
                 # Save Losses for plotting later
-                self.G_losses.append(errG.item())
-                self.D_losses.append(errD.item())
+                self.loss["generator"].append((i, errG.item()))
+                self.loss["discriminator"].append((i, errD.item()))
 
                 # checar diferença entre pixel das imagens
                 # Check how the generator is doing by saving G's output on fixed_noise
@@ -237,7 +237,19 @@ class GAN:
             return self.generator(latent_tensors).detach().cpu()
 
     def predict_discriminator(self, images):
-        dev_images = images.to(self.device)
+        device_images = images.to(self.device)
         # Forward pass real batch through D
         with torch.no_grad():
-            return self.discriminator(dev_images).view(-1)
+            return self.discriminator(device_images).view(-1)
+
+    def persist(self, path, filename):
+        if not os.path.isdir(path):
+            os.mkdir(path)
+
+        with open(os.path.join(path, filename), "wb+") as outfile:
+            dill.dump(self, outfile)
+
+    @classmethod
+    def load(self, filename):
+        with open(filename, "rb") as file:
+            return dill.load(file)
